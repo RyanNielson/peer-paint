@@ -115,6 +115,7 @@ const DrawingCanvas = () => {
 
   return (
     <Wrapper>
+      <h1>Peer Paint</h1>
       <ColorPicker value={drawingColor} onChange={e => setDrawingColor(e.target.value)} />
       <Canvas
         width={25}
