@@ -2,6 +2,8 @@
 
 A collaborative real-time pixel art tool created using React and Firebase. This was created as an experiment to test and idea, nothing more.
 
+Visit https://peer-paint.firebaseapp.com/ to see this app in action. Use at your own risk though, I have no control of what others decide to draw.
+
 ## Available Scripts
 
 In the project directory, you can run:
