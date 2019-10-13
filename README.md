@@ -1,3 +1,5 @@
+# Peer Paint
+
 A collaborative real-time pixel art tool created using React and Firebase. This was created as an experiment to test and idea, nothing more.
 
 ## Available Scripts
