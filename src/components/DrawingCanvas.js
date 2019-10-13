@@ -116,6 +116,10 @@ const DrawingCanvas = () => {
   return (
     <Wrapper>
       <h1>Peer Paint</h1>
+      <p>
+        Use left click to draw, hold d while clicking to delete, and use the color picker below to
+        change your drawing color.
+      </p>
       <ColorPicker value={drawingColor} onChange={e => setDrawingColor(e.target.value)} />
       <Canvas
         width={25}
