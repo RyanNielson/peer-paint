@@ -1,7 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { useSelector, useDispatch } from 'react-redux';
 import styled from 'styled-components';
-import { setPoints } from '../actions';
 import { firestore } from '../firebase';
 
 const Wrapper = styled.div`
@@ -22,22 +20,9 @@ const Canvas = styled.canvas`
 `;
 
 const DrawingCanvas = () => {
-  const points = useSelector(state => state.points.items);
-  const [deletionMode, setDeletionMode] = useState(false);
+  const [points, setPoints] = useState([]);
   const [drawingColor, setDrawingColor] = useState('#ff0000');
-  const dispatch = useDispatch();
-
-  const keyDown = e => {
-    if (e.keyCode === 68) {
-      setDeletionMode(true);
-    }
-  };
-
-  const keyUp = e => {
-    if (e.keyCode === 68) {
-      setDeletionMode(false);
-    }
-  };
+  const canvasRef = React.useRef(null);
 
   useEffect(() => {
     const unsubscribe = firestore
@@ -48,55 +33,11 @@ const DrawingCanvas = () => {
           ...doc.data(),
         }));
 
-        dispatch(setPoints(allPoints));
+        setPoints(allPoints);
       });
 
     return unsubscribe;
-  }, [dispatch]);
-
-  useEffect(() => {
-    document.addEventListener('keydown', keyDown);
-    document.addEventListener('keyup', keyUp);
-
-    return () => {
-      document.removeEventListener('keydown', keyDown);
-      document.removeEventListener('keyup', keyUp);
-    };
   }, []);
-
-  const addPoint = (x, y) => {
-    firestore
-      .collection('points')
-      .doc(`${x},${y}`)
-      .set({
-        x,
-        y,
-        color: drawingColor,
-      })
-      .then(() => {
-        console.log('added');
-      })
-      .catch(err => {
-        console.log('Error', err);
-      });
-  };
-
-  const deletePoint = (x, y) => {
-    const coordinate = `${x},${y}`;
-
-    firestore
-      .collection('points')
-      .doc(coordinate)
-      .delete()
-      .then(() => {
-        console.log('deleted');
-      })
-      .catch(err => {
-        console.log('Error', err);
-      });
-  };
-
-  const canvasRef = React.useRef(null);
 
   const updateCanvas = () => {
     const canvas = canvasRef.current;
@@ -113,31 +54,65 @@ const DrawingCanvas = () => {
 
   useEffect(updateCanvas, [points, updateCanvas]);
 
+  const determineCoordinate = e => {
+    const pixelWidth = e.currentTarget.clientWidth / e.currentTarget.width;
+    const pixelHeight = e.currentTarget.clientHeight / e.currentTarget.height;
+
+    const x = Math.floor((e.pageX - e.currentTarget.offsetLeft) / pixelWidth);
+    const y = Math.floor((e.pageY - e.currentTarget.offsetTop) / pixelHeight);
+
+    return { x, y };
+  };
+
+  const addPoint = e => {
+    const { x, y } = determineCoordinate(e);
+
+    firestore
+      .collection('points')
+      .doc(`${x},${y}`)
+      .set({
+        x,
+        y,
+        color: drawingColor,
+      })
+      .then(() => {
+        console.log('added');
+      })
+      .catch(err => {
+        console.log('Error', err);
+      });
+  };
+
+  const deletePoint = e => {
+    e.preventDefault();
+    const { x, y } = determineCoordinate(e);
+
+    firestore
+      .collection('points')
+      .doc(`${x},${y}`)
+      .delete()
+      .then(() => {
+        console.log('deleted');
+      })
+      .catch(err => {
+        console.log('Error', err);
+      });
+  };
+
   return (
     <Wrapper>
       <h1>Peer Paint</h1>
       <p>
-        Use left click to draw, hold d while clicking to delete, and use the color picker below to
-        change your drawing color.
+        Use left click to draw, right click to delete, and use the color picker below to change your
+        drawing color.
       </p>
       <ColorPicker value={drawingColor} onChange={e => setDrawingColor(e.target.value)} />
       <Canvas
         width={25}
         height={25}
         ref={canvasRef}
-        onClick={e => {
-          const pixelWidth = e.currentTarget.clientWidth / e.currentTarget.width;
-          const pixelHeight = e.currentTarget.clientHeight / e.currentTarget.height;
-
-          const clickPointX = Math.floor((e.pageX - e.currentTarget.offsetLeft) / pixelWidth);
-          const clickPointY = Math.floor((e.pageY - e.currentTarget.offsetTop) / pixelHeight);
-
-          if (deletionMode) {
-            deletePoint(clickPointX, clickPointY);
-          } else {
-            addPoint(clickPointX, clickPointY);
-          }
-        }}
+        onClick={addPoint}
+        onContextMenu={deletePoint}
       />
     </Wrapper>
   );
